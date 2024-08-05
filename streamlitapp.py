@@ -142,6 +142,8 @@ if conn:
         data3['month'] = data3['month_number'].apply(
             lambda x: calendar.month_abbr[x].upper()
         )
+    else:
+        st.warning("No data retrieved from the database.")
 
 # Function to create CSV download link
 
