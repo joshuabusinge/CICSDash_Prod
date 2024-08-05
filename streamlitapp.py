@@ -34,7 +34,7 @@ if conn:
     st.write("# CICS Dashboard")
 
     # Perform query using st.experimental_memo
-    @st.experimental_memo(ttl=600)
+    @st.cache_data(ttl=600)
     def run_query(query):
         try:
             with conn.cursor() as cur:

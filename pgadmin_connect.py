@@ -6,7 +6,7 @@ from sshtunnel import SSHTunnelForwarder
 # Initialize connection
 
 
-@st.experimental_singleton
+@st.cache_resource
 def init_connection():
     # SSH server settings
     ssh_host = st.secrets["ssh"]["host"]
