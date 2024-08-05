@@ -1,4 +1,3 @@
-calendar
 streamlit
 psycopg2
 altair
