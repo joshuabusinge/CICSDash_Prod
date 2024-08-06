@@ -40,3 +40,8 @@ def init_connection():
     )
 
     return conn, server
+
+
+def close_connection(conn, server):
+    conn.close()
+    server.stop()

@@ -177,13 +177,19 @@ with st.sidebar:
         'Select crops', crop_list, default=crop_list)
 
     # Filtering data
-filter_data1 = data1[(data1['year'] == selected_year) &
-                     (data1['status'].isin(selected_status))]
-filter_data2 = data2[(data2['year'] == selected_year) &
-                     (data2['country'].isin(selected_countries))]
-filter_data3 = data3[(data3['year'] == selected_year) &
-                     (data3['cropname'].isin(selected_crops))]
+    filter_data1 = data1[(data1['year'] == selected_year) &
+                         (data1['status'].isin(selected_status))]
+    filter_data2 = data2[(data2['year'] == selected_year) &
+                         (data2['country'].isin(selected_countries))]
+    filter_data3 = data3[(data3['year'] == selected_year) &
+                         (data3['cropname'].isin(selected_crops))]
 
+    st.markdown(filedownload(filter_data1, "products.csv"),
+                unsafe_allow_html=True)
+    st.markdown(filedownload(filter_data2, "packinglist.csv"),
+                unsafe_allow_html=True)
+    st.markdown(filedownload(filter_data3, "reception.csv"),
+                unsafe_allow_html=True)
 
 # Calculate total weight for data1
 total_weight = filter_data1['product_weight'].sum()
@@ -228,42 +234,35 @@ with col[0]:
 with col[1]:
     st.markdown('#### Product Volumes Received Per Month')
 
-    # Modified bar graph to show all statuses per month
+    # Modified bar graph to show all statuses
     p = alt.Chart(filter_data1).mark_bar().encode(
-        x=alt.X('month', title='Month'),
-        y=alt.Y('sum(product_weight)', title='Total Product Weight'),
-        color='status'  # Color encoding for different statuses
+        x=alt.X('month:O', sort=list(calendar.month_abbr)),
+        y=alt.Y('product_weight:Q'),
+        color='status:N',
+        tooltip=['month', 'product_weight', 'status']
     ).properties(
-        width=alt.Step(80)  # controls width of bar.
+        width=600,
+        height=400
     )
 
-    st.write(p)
+    st.altair_chart(p, use_container_width=True)
 
-    st.markdown('#### Product Exported Per Country Per Client')
-
-    st.table(filter_data2[[
-        'country', 'clientcompany', 'product_weight']].head())
-
-    st.markdown('#### Product Wastage')
-    reception_data_melted = pd.melt(
-        filter_data3,
-        id_vars=['reception_id', 'exporter_name', 'cropname', 'created_at'],
-        value_vars=['reception_qtyremoved', 'qcp1_qtyremoved', 'qcp2_qtyremoved',
-                    'qcp3_qtyremoved', 'qcp4_weight_rejected', 'qcp5_weight_rejected'],
-        var_name='Stage',
-        value_name='Quantity'
-    )
-
-    reception_data_melted['created_at'] = pd.to_datetime(
-        reception_data_melted['created_at'])
-    reception_data_melted['month'] = reception_data_melted['created_at'].dt.month.apply(
-        lambda x: calendar.month_abbr[x].upper())
-
+    # Exporters filter
+    filter_data3 = filter_data3[[
+        'exporter_name', 'reception_qtyremoved', 'qcp1_qtyremoved',
+        'qcp2_qtyremoved', 'qcp3_qtyremoved', 'qcp4_weight_rejected',
+        'qcp5_weight_rejected'
+    ]]
+    filter_data3 = filter_data3.melt(
+        id_vars=['exporter_name'], var_name='Stage', value_name='Quantity')
+    reception_data_melted = filter_data3.groupby(
+        ['exporter_name', 'Stage']).sum().reset_index()
+    reception_data_melted['year'] = selected_year
     reception_line_chart = alt.Chart(reception_data_melted).mark_line().encode(
-        x='month:O',
+        x='exporter_name:O',
         y='Quantity:Q',
         color='Stage:N',
-        tooltip=['month:O', 'Quantity:Q', 'Stage:N']
+        tooltip=['exporter_name', 'Quantity', 'Stage']
     ).properties(
         width=600,
         height=400
@@ -271,14 +270,7 @@ with col[1]:
 
     st.altair_chart(reception_line_chart, use_container_width=True)
 
-# Add download links at the bottom of the sidebar
-st.sidebar.markdown("### Download Filtered Data")
-st.sidebar.markdown(filedownload(
-    filter_data1, "filtered_data1.csv"), unsafe_allow_html=True)
-st.sidebar.markdown(filedownload(
-    filter_data2, "filtered_data2.csv"), unsafe_allow_html=True)
-st.sidebar.markdown(filedownload(
-    filter_data3, "filtered_data3.csv"), unsafe_allow_html=True)
+# Close connection when the app is shut down
 
 
 def close_connection():
@@ -286,10 +278,6 @@ def close_connection():
         server.stop()
 
 
-if 'shutdown' not in st.session_state:
-    st.session_state.shutdown = False
-
-if st.session_state.shutdown:
+if st.button("Shutdown Connection"):
     close_connection()
-
-st.session_state.shutdown = True
+    st.session_state.shutdown = True
