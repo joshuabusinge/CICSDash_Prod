@@ -229,7 +229,6 @@ with col[0]:
 
     st.altair_chart(pie, use_container_width=True)
 
-    st.markdown('#### Product Wastage')
 
 with col[1]:
     st.markdown('#### Product Volumes Received Per Month')
@@ -246,6 +245,8 @@ with col[1]:
     )
 
     st.altair_chart(p, use_container_width=True)
+
+    st.markdown('#### Product Wastage')
 
     # Exporters filter
     filter_data3 = filter_data3[[
