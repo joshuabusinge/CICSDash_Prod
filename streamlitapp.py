@@ -155,6 +155,16 @@ def filedownload(df, filename="download.csv"):
     href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV File</a>'
     return href
 
+# Function to combine dataframes and create a single CSV download link
+
+
+def combined_filedownload(df1, df2, df3, filename="combined_data.csv"):
+    combined_df = pd.concat([df1, df2, df3], ignore_index=True)
+    csv = combined_df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download Filtered CSV File</a>'
+    return href
+
 
 # Sidebar
 with st.sidebar:
@@ -184,11 +194,7 @@ with st.sidebar:
     filter_data3 = data3[(data3['year'] == selected_year) &
                          (data3['cropname'].isin(selected_crops))]
 
-    st.markdown(filedownload(filter_data1, "products.csv"),
-                unsafe_allow_html=True)
-    st.markdown(filedownload(filter_data2, "packinglist.csv"),
-                unsafe_allow_html=True)
-    st.markdown(filedownload(filter_data3, "reception.csv"),
+    st.markdown(combined_filedownload(filter_data1, filter_data2, filter_data3, "combined_data.csv"),
                 unsafe_allow_html=True)
 
 # Calculate total weight for data1
