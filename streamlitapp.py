@@ -297,15 +297,22 @@ with st.sidebar:
 
 # Calculate total weight for data1
 total_weight = filter_data1['product_weight'].sum()
-total_weight_str = f"{total_weight} Kg"
+total_weight_str = f"{total_weight:,.0f} Kg"
 # show the status of the filter
 status_weight = selected_status
 # Filter columns for filter_data2
 filter_data2 = filter_data2[[
     'country', 'clientcompany', 'product_weight']]
+# Group by country and sum the product weights
+country_weights = filter_data2.groupby('country')['product_weight'].sum()
+# Get the top 5 countries with the highest product_weight
+top_5_countries = country_weights.nlargest(5).index
+
+# Filter the original dataframe to only include rows from these top 5 countries
+filter_data2_top5 = filter_data2[filter_data2['country'].isin(top_5_countries)]
 
 # Main Panel
-col = st.columns((3, 5), gap='medium')
+col = st.columns((4, 5), gap='medium')
 
 with col[0]:
     st.markdown('#### Total Product Weight')
@@ -320,12 +327,12 @@ with col[0]:
     # Two line breaks for more space
     st.markdown("<br><br><br>", unsafe_allow_html=True)
 
-    st.markdown('#### Destinations')
+    st.markdown('#### Top 5 Country Destinations')
     # Create donut pie chart
-    pie = alt.Chart(filter_data2).mark_arc(innerRadius=50).encode(
+    pie = alt.Chart(filter_data2_top5).mark_arc(innerRadius=50).encode(
         theta=alt.Theta(field="product_weight", type="quantitative"),
-        color=alt.Color(field="clientcompany", type="nominal"),
-        tooltip=['clientcompany', 'country', 'product_weight']
+        color=alt.Color(field="country", type="nominal"),
+        tooltip=['country', 'clientcompany', 'product_weight']
     ).properties(
         width=400,
         height=400
@@ -350,7 +357,7 @@ with col[0]:
         max_netweight = 0  # Default value if the DataFrame is empty
 
     st.dataframe(filter_data4_sorted,
-                 column_order=("district", "cropname", "netweight", "year"),
+                 column_order=("district", "cropname", "netweight"),
                  hide_index=True,
                  width=None,
                  column_config={
@@ -361,9 +368,9 @@ with col[0]:
                          "District",
                      ),
                      "netweight": st.column_config.ProgressColumn(
-                         "Net Weight",
+                         "Net Weight(Kg)",
                          format="%d",
-                         min_value=0),
+                         min_value=0, max_value=20000,),
                  }
                  )
 
@@ -378,12 +385,12 @@ with col[0]:
 
     st.dataframe(top_exporters,
                  column_order=("exportcompanyname",
-                               "total_weight_received", "total_weight_exported"),
+                               "total_weight_received"),
                  hide_index=True,
                  column_config={
                      "exportcompanyname": st.column_config.TextColumn("Export Company"),
-                     "total_weight_received": st.column_config.ProgressColumn("Total Weight Received", format="%d", min_value=0),
-                     "total_weight_exported": st.column_config.ProgressColumn("Total Exported Weight", format="%d", min_value=0), })
+                     "total_weight_received": st.column_config.ProgressColumn("Total Weight Received(Kg)", format="%d", min_value=0, max_value=50000,), })
+    #  "total_weight_exported": st.column_config.ProgressColumn("Total Exported Weight", format="%d", min_value=0), })
 
 with col[1]:
     st.markdown('#### Product Volumes Received Per Month')
@@ -426,7 +433,7 @@ with col[1]:
 
     st.altair_chart(reception_line_chart, use_container_width=True)
 
-    st.markdown('### Top Crop Exported by Country')
+    st.markdown('### Top Crop Exported')
     # Aggregate the total weight and weight received for each crop name and country
     crop_export_summary_aggregated = data6.groupby(['cropname', 'countryname']).agg(
         total_weight_received=('weightreceived', 'sum'), total_weight=('weight', 'sum')).reset_index()
@@ -438,16 +445,14 @@ with col[1]:
     # Display the sorted data
     st.dataframe(crop_export_summary_sorted,
                  column_order=("cropname", "countryname",
-                               "total_weight_received", "total_weight"),
+                               "total_weight_received"),
                  hide_index=True,
                  use_container_width=True,
                  column_config={
                      "cropname": st.column_config.TextColumn("Crop Name"),
                      "countryname": st.column_config.TextColumn("Country"),
-                     "total_weight_received": st.column_config.ProgressColumn("Weight for Export",
-                                                                              format="%d", min_value=0),
-                     "total_weight": st.column_config.ProgressColumn("Total Weight Requested",
-                                                                     format="%d", min_value=0)
+                     "total_weight_received": st.column_config.ProgressColumn("Weight for Export(Kg)", format="%d", min_value=0, max_value=20000,)
+
                  }
                  )
 
