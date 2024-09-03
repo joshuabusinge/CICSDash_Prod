@@ -465,6 +465,6 @@ def close_connection():
         server.stop()
 
 
-if st.button("Shutdown Connection"):
-    close_connection()
-    st.session_state.shutdown = True
+# if st.button("Shutdown Connection"):
+#     close_connection()
+#     st.session_state.shutdown = True
