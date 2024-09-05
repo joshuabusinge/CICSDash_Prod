@@ -8,7 +8,7 @@ import base64  # Import base64 for encoding CSV
 # Page configuration
 st.set_page_config(
     page_title="CICS Dashboard",
-    page_icon="🥑",
+    page_icon="APDM",
     layout="wide",
     initial_sidebar_state="expanded"
 )
